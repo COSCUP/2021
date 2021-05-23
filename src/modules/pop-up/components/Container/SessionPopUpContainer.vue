@@ -87,49 +87,64 @@ interface NewsList {
 //   '../../../../assets/images/sponsor-news/*/*.png'
 // )
 
-const indexStringLength = sponsorNewsData.length.toString(16).length
-const randomString = sponsorNewsData
-  .map((data, i) => {
-    return i.toString(16)
-      .padStart(indexStringLength, '0')
-      .repeat(data.weight)
-  })
-  .join('')
-function randomNews (): NewsData {
-  const random = Math.floor(Math.random() * (randomString.length / indexStringLength))
-  const result = Number('0x' + randomString.slice(random * indexStringLength, (random + 1) * indexStringLength))
-  return sponsorNewsData[result]
-}
-
-function randomAllNews () {
-  const result: Partial<NewsList> = {
-    horizontalBottom: randomNews()
-  }
-  if (Math.random() < 0.3) {
-    const sponsor = randomNews().sponsor
-    const datas = sponsorNewsData
-      .filter((data) => data.sponsor === sponsor)
-      .sort(() => 0.5 - Math.random())
-    switch (datas.length) {
-      case 0:
-      case 1:
-        result.verticalLeft = datas[0]
-        result.verticalRight = datas[0]
-        break
-
-      default:
-        result.verticalLeft = datas[0]
-        result.verticalRight = datas[1]
-        break
+const { randomOnce } = (() => {
+  if (sponsorNewsData.length === 0) {
+    return {
+      randomOnce () { return null }
     }
-  } else {
-    // Random 2 news
-    result.verticalLeft = randomNews()
-    result.verticalRight = randomNews()
   }
 
-  return result as NewsList
-}
+  const indexStringLength = sponsorNewsData.length.toString(16).length
+  const randomString = sponsorNewsData
+    .map((data, i) => {
+      return i.toString(16)
+        .padStart(indexStringLength, '0')
+        .repeat(data.weight)
+    })
+    .join('')
+  function randomNews (): NewsData {
+    const random = Math.floor(Math.random() * (randomString.length / indexStringLength))
+    const result = Number('0x' + randomString.slice(random * indexStringLength, (random + 1) * indexStringLength))
+    return sponsorNewsData[result]
+  }
+
+  function randomOnce () {
+    const result: Partial<NewsList> = {
+      horizontalBottom: randomNews()
+    }
+    if (Math.random() < 0.3) {
+      const level = Math.random() < 0.6 ? 'titanium' : 'diamond'
+      const sponsor = (sponsorNewsData
+        .filter((data) => data.level === level)
+        .sort(() => 0.5 - Math.random())
+        .pop() ?? sponsorNewsData[0]).sponsor
+      const datas = sponsorNewsData
+        .filter((data) => data.sponsor === sponsor)
+        .sort(() => 0.5 - Math.random())
+      switch (datas.length) {
+        case 0:
+        case 1:
+          result.verticalLeft = datas[0]
+          result.verticalRight = datas[0]
+          break
+
+        default:
+          result.verticalLeft = datas[0]
+          result.verticalRight = datas[1]
+          break
+      }
+    } else {
+      result.verticalLeft = randomNews()
+      result.verticalRight = randomNews()
+    }
+
+    return result as NewsList
+  }
+
+  return {
+    randomOnce
+  }
+})()
 
 export default defineComponent({
   name: 'SessionPopupContainer',
@@ -137,7 +152,7 @@ export default defineComponent({
     const news = ref<NewsList | null>(null)
 
     onBeforeMount(() => {
-      news.value = randomAllNews()
+      news.value = randomOnce()
     })
 
     return {

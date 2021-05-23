@@ -67,6 +67,7 @@ function transformSponsorNews (rows: SponsorNewsRow[], sponsorLevelMap: ReturnTy
       },
       description: r.description,
       link: r.link,
+      level: sponsorMap[r.sponsor].level,
       weight: (r.specialWeight.length === 0 || isNaN(Number(r.specialWeight)))
         ? sponsorLevelMap[sponsorMap[r.sponsor].level].basicWeight
         : Number(r.specialWeight)
